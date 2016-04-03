@@ -8,7 +8,7 @@ import java.awt.BasicStroke;
 import javax.swing.JPanel;
 
 import java.awt.Point;
-
+import java.util.List;
 import java.util.Vector;
 
 import static java.lang.Math.*;
@@ -41,19 +41,21 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 	protected double xmin, xmax;
 	protected double ymin, ymax;
         
-        protected Point pts;
-        Graphics2D g2;
+    protected Point pts;
+    Graphics2D g2;
 
 	protected Vector<Function> functions;
+	protected Vector<Boolean> functionsState;
 	
 	public Grapher() {
 		xmin = -PI/2.; xmax = 3*PI/2;
 		ymin = -1.5;   ymax = 1.5;
 		
 		functions = new Vector<Function>();
-                this.addMouseListener(this);
-                this.addMouseMotionListener(this);
-                this.addMouseWheelListener(this);
+		functionsState = new Vector<Boolean>();
+        this.addMouseListener(this);
+        this.addMouseMotionListener(this);
+        this.addMouseWheelListener(this);
 	}
 	
 	public void add(String expression) {
@@ -62,10 +64,13 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 	
 	public void add(Function function) {
 		functions.add(function);
+		functionsState.add(false);
 		repaint();
 	}
 		
-	public Dimension getPreferredSize() { return new Dimension(W, H); }
+	public Dimension getPreferredSize() {
+		return new Dimension(W, H);
+	}
 	
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -110,13 +115,28 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 			Xs[i] = X(x);
 		}
 		
-		for(Function f : functions) {
+//		// OLD VERSION 
+//		for(Function f : functions) {
+//			// y values
+//			int Ys[] = new int[N];
+//			for(int i = 0; i < N; i++) {
+//				Ys[i] = Y(f.y(xs[i]));
+//			}
+//			g2.drawPolyline(Xs, Ys, N);
+//		}
+		
+		for(int i = 0; i < functions.size(); ++i) {
+			//set bold if function is "active"
+			if(functionsState.get(i).booleanValue() == true) {
+				g2.setStroke(new BasicStroke(2));
+			} else {
+				g2.setStroke(new BasicStroke(1));
+			}
 			// y values
 			int Ys[] = new int[N];
-			for(int i = 0; i < N; i++) {
-				Ys[i] = Y(f.y(xs[i]));
+			for(int j = 0; j < N; j++) {
+				Ys[j] = Y(functions.get(i).y(xs[j]));
 			}
-			
 			g2.drawPolyline(Xs, Ys, N);
 		}
 
@@ -136,11 +156,19 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 		for(double y = -ystep; y > ymin; y -= ystep) { drawYTick(g2, y); }
 	}
 	
-	protected double dx(int dX) { return  (double)((xmax-xmin)*dX/W); }
-	protected double dy(int dY) { return -(double)((ymax-ymin)*dY/H); }
+	protected double dx(int dX) { 
+		return  (double)((xmax-xmin)*dX/W);
+	}
+	protected double dy(int dY) {
+		return -(double)((ymax-ymin)*dY/H);
+	}
 
-	protected double x(int X) { return xmin+dx(X-MARGIN); }
-	protected double y(int Y) { return ymin+dy((Y-MARGIN)-H); }
+	protected double x(int X) {
+		return xmin+dx(X-MARGIN);
+	}
+	protected double y(int Y) {
+		return ymin+dy((Y-MARGIN)-H);
+	}
 	
 	protected int X(double x) { 
 		int Xs = (int)round((x-xmin)/(xmax-xmin)*W);
@@ -204,18 +232,22 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 		repaint();	
 	}
 
+	//DRAG
     public void mouseDragged(MouseEvent e) {
+    	//bouton gauche : déplace le repère
         if (SwingUtilities.isLeftMouseButton(e)){
+        	System.out.println("DRAG LEFT");
             setCursor(new Cursor(Cursor.HAND_CURSOR));
             //translate(e.getX(),e.getY());
             translate(e.getX() - (int)pts.getX(), e.getY() - (int)pts.getY());
             pts = e.getPoint();
         }
-        
+    	//bouton droit : zoom sur zone sélectionnée
         if (SwingUtilities.isRightMouseButton(e)) {
-             Rectangle r = new Rectangle(pts);
-             r.add(e.getPoint());
-             g2.draw(r);
+        	System.out.println("DRAG RIGHT");
+			Rectangle r = new Rectangle(pts);
+			r.add(e.getPoint());
+			g2.draw(r);
         }
     }
 
@@ -225,11 +257,11 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 
     public void mouseClicked(MouseEvent e) {
         if (e.getButton() == 1){
-            // Zoom de 5% centrÃ© sur le curseur
+            // Zoom de 5% centré sur le curseur
             zoom(e.getPoint(), 5);
         }
         if (e.getButton() == 3){
-            // DÃ©zoom de 5% centrÃ© sur le curseur.
+            // Dézoom de 5% centré sur le curseur.
             zoom(e.getPoint(), -5);
         }
     }
@@ -239,6 +271,7 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
     }
 
     public void mouseReleased(MouseEvent e) {
+    	System.out.println("RELEASED");
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         if (e.getButton() == 3) {
             zoom(pts, e.getPoint());
@@ -259,8 +292,20 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
             zoom(e.getPoint(), 5);
         }
         else if (e.getPreciseWheelRotation() > 0) {
-            //DÃ©zoom
+            //Dézoom
             zoom(e.getPoint(), -5);
         }
+    }
+    
+    public void activeFunctions(List<String> listFunc) {
+    	for(int i = 0; i < functions.size(); ++i) {
+    		functionsState.set(i, false);
+    		for(int j = 0; j < listFunc.size(); ++j) {
+    			if(functions.get(i).toString().equals(listFunc.get(j))) {
+    				functionsState.set(i, true);
+    				break;
+    			}
+    		}
+    	}
     }
 }
