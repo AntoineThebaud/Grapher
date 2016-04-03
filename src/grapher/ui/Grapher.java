@@ -139,7 +139,8 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 			}
 			g2.drawPolyline(Xs, Ys, N);
 		}
-
+		
+		g2.setStroke(new BasicStroke(1));
 		g2.setClip(null);
 
 		// axes
