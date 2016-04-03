@@ -1,8 +1,12 @@
 package grapher.ui;
 
+import java.awt.BorderLayout;
+
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JSplitPane;
+import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
 public class Main extends JFrame {
@@ -22,11 +26,12 @@ public class Main extends JFrame {
 		//SplitPane
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,dataList,grapher);
 		splitPane.setOneTouchExpandable(true);
-		splitPane.setDividerLocation(100);
-		
+		splitPane.setDividerLocation(80);
 		this.add(splitPane);
 		
-		pack();
+		this.pack();
+		this.setLocationRelativeTo(null);//center the frame
+		this.setVisible(true);
 	}
 
 	public static void main(String[] argv) {
