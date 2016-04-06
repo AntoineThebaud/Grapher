@@ -25,7 +25,7 @@ import java.awt.event.MouseWheelListener;
 import javax.swing.SwingUtilities;
 
 
-public class Grapher extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener{
+public class Grapher extends JPanel {
 	static final int MARGIN = 40;
 	static final int STEP = 5;
 	
@@ -47,15 +47,15 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 	protected Vector<Function> functions;
 	protected Vector<Boolean> functionsState;
 	
-	public Grapher() {
+	public Grapher() {		
 		xmin = -PI/2.; xmax = 3*PI/2;
 		ymin = -1.5;   ymax = 1.5;
 		
 		functions = new Vector<Function>();
 		functionsState = new Vector<Boolean>();
-        this.addMouseListener(this);
-        this.addMouseMotionListener(this);
-        this.addMouseWheelListener(this);
+        this.addMouseListener(new GrapherListener());
+        this.addMouseMotionListener(new GrapherListener());
+        this.addMouseWheelListener(new GrapherListener());
 	}
 	
 	public void add(String expression) {
@@ -232,71 +232,6 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
 		ymin = min(y0, y1); ymax = max(y0, y1);
 		repaint();	
 	}
-
-	//DRAG
-    public void mouseDragged(MouseEvent e) {
-    	//bouton gauche : déplace le repère
-        if (SwingUtilities.isLeftMouseButton(e)){
-        	System.out.println("DRAG LEFT");
-            setCursor(new Cursor(Cursor.HAND_CURSOR));
-            //translate(e.getX(),e.getY());
-            translate(e.getX() - (int)pts.getX(), e.getY() - (int)pts.getY());
-            pts = e.getPoint();
-        }
-    	//bouton droit : zoom sur zone sélectionnée
-        if (SwingUtilities.isRightMouseButton(e)) {
-        	System.out.println("DRAG RIGHT");
-			Rectangle r = new Rectangle(pts);
-			r.add(e.getPoint());
-			g2.draw(r);
-        }
-    }
-
-    public void mouseMoved(MouseEvent e) {
-       
-    }
-
-    public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == 1){
-            // Zoom de 5% centré sur le curseur
-            zoom(e.getPoint(), 5);
-        }
-        if (e.getButton() == 3){
-            // Dézoom de 5% centré sur le curseur.
-            zoom(e.getPoint(), -5);
-        }
-    }
-
-    public void mousePressed(MouseEvent e) {
-        pts = e.getPoint();
-    }
-
-    public void mouseReleased(MouseEvent e) {
-    	System.out.println("RELEASED");
-        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        if (e.getButton() == 3) {
-            zoom(pts, e.getPoint());
-        }
-    }
-
-    public void mouseEntered(MouseEvent e) {
-        
-    }
-
-    public void mouseExited(MouseEvent e) {
-        
-    }
-
-    public void mouseWheelMoved(MouseWheelEvent e) {
-        if (e.getPreciseWheelRotation() < 0) {
-            //Zoom
-            zoom(e.getPoint(), 5);
-        }
-        else if (e.getPreciseWheelRotation() > 0) {
-            //Dézoom
-            zoom(e.getPoint(), -5);
-        }
-    }
     
     public void activeFunctions(List<String> listFunc) {
     	for(int i = 0; i < functions.size(); ++i) {
@@ -309,4 +244,86 @@ public class Grapher extends JPanel implements MouseListener, MouseMotionListene
     		}
     	}
     }
+	
+	
+	//TODO : Refactor version Machine à états
+	public class GrapherListener implements MouseListener, MouseMotionListener, MouseWheelListener {
+
+		@Override
+		public void mouseWheelMoved(MouseWheelEvent e) {
+	        if (e.getPreciseWheelRotation() < 0) {
+	            //Zoom
+	            zoom(e.getPoint(), 5);
+	        }
+	        else if (e.getPreciseWheelRotation() > 0) {
+	            //Dézoom
+	            zoom(e.getPoint(), -5);
+	        }
+		}
+
+		@Override
+		public void mouseDragged(MouseEvent e) {
+			//bouton gauche : déplace le repère
+	        if (SwingUtilities.isLeftMouseButton(e)){
+	        	System.out.println("DRAG LEFT");
+	            setCursor(new Cursor(Cursor.HAND_CURSOR));
+	            //translate(e.getX(),e.getY());
+	            translate(e.getX() - (int)pts.getX(), e.getY() - (int)pts.getY());
+	            pts = e.getPoint();
+	        }
+	    	//bouton droit : zoom sur zone sélectionnée
+	        if (SwingUtilities.isRightMouseButton(e)) {
+	        	System.out.println("DRAG RIGHT");
+				Rectangle r = new Rectangle(pts);
+				r.add(e.getPoint());
+				g2.draw(r);
+	        }
+		}
+
+		@Override
+		public void mouseMoved(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+	        if (e.getButton() == 1){
+	            // Zoom de 5% centré sur le curseur
+	            zoom(e.getPoint(), 5);
+	        }
+	        if (e.getButton() == 3){
+	            // Dézoom de 5% centré sur le curseur.
+	            zoom(e.getPoint(), -5);
+	        }
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			pts = e.getPoint();
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+	    	System.out.println("RELEASED");
+	        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+	        if (e.getButton() == 3) {
+	            zoom(pts, e.getPoint());
+	        }
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
 }

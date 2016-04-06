@@ -26,7 +26,7 @@ public class Main extends JFrame {
 		//SplitPane
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,dataList,grapher);
 		splitPane.setOneTouchExpandable(true);
-		splitPane.setDividerLocation(80);
+		splitPane.setDividerLocation(120);
 		this.add(splitPane);
 		
 		this.pack();
