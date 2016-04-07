@@ -33,6 +33,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableModel;
 
 public class Menu extends JPanel implements ActionListener {
 	
@@ -52,18 +53,22 @@ public class Menu extends JPanel implements ActionListener {
 		String[] columnNames = {"Expression", "Color"};
 		
 		//Todo : boucle qui ajoute les fonctions avec couleur
-		Object[][] data = {
-	        {expressions[0], "Red"},
-	        {expressions[1], "Blue"},
-	    };
 		
-		table = new JTable(data, columnNames);
+		Object[][] data = {};
+		
+		DefaultTableModel model = new DefaultTableModel(data, columnNames);
+		table = new JTable(model);
+		for(String expression : expressions) {
+			model.addRow(new Object[]{expression, "RED"});
+		}
+		
+		//table = new JTable(data, columnNames);
 		table.setFillsViewportHeight(true);
 		table.getColumnModel().getColumn(0).setPreferredWidth(120);
 		table.getColumnModel().getColumn(1).setPreferredWidth(50);
 		table.setCellSelectionEnabled(true);
 	    ListSelectionModel cellSelectionModel = table.getSelectionModel();
-	    cellSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);//TODO : REPLACE BY MULTIPLE
+	    cellSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);//TODO : REPLACE BY MULTIPLE
 	    cellSelectionModel.addListSelectionListener(new MenuListener());
 		
 		//Composant 2 : Boutons
@@ -89,54 +94,50 @@ public class Menu extends JPanel implements ActionListener {
 	    this.add(toolbar, BorderLayout.SOUTH);
 	}
 
-//	@Override //List event
-//	public void valueChanged(ListSelectionEvent e) {
-//        if(!e.getValueIsAdjusting()) { 
-//            final List<String> selectedValuesList = list.getSelectedValuesList(); 
-//            grapher.activeFunctions(selectedValuesList);
-//            grapher.repaint();
-//        } 
-//	}
-
 	@Override //Button event
 	public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         
         switch (e.getActionCommand()) {
 	        case PLUS:
-	        	String newExp = JOptionPane.showInputDialog(this,"Nouvelle expression");
+	        	String newExp = JOptionPane.showInputDialog(this.getParent(),"Nouvelle expression");
 	        	System.out.println(newExp);
-	        	//update menu
-	        	//TODO
-	        	//update graph
-	        	grapher.add(newExp);
+	        	try {
+	        		//update graph
+		        	grapher.add(newExp);
+		        	//update menu
+		        	DefaultTableModel model = (DefaultTableModel) table.getModel();
+		        	model.addRow(new Object[]{newExp, "GREEN"});
+	        	} catch (Exception ex) {
+	        		JOptionPane.showMessageDialog(this.getParent(),"Expression invalide", "Erreur", 0);
+	        	}
 	        	break;
 	        case MOINS:
-	        	System.out.println("Je suis un moins.. gitanerie");
-	        	//TODO : Suppression des fonctions sélectionnées
+	        	int[] selectedRows = table.getSelectedRows();
+	        	//update graph
+	        	grapher.remove(selectedRows);
+	        	//update menu
+	        	DefaultTableModel model = (DefaultTableModel) table.getModel();
+	        	for(int i = 0; i < selectedRows.length; ++i) {
+	        		model.removeRow(selectedRows[i] - i);
+	        		//" - i" car la table réduit de 1 à chaque suppression
+	        		System.out.println("AA");
+	        	}
+	        	table.clearSelection();
 	        	break;
 	        default:
 	        	assert(false);
         }
 	}
 	
-	public class MenuListener implements TableModelListener, ListSelectionListener {
-
-		@Override
-		public void tableChanged(TableModelEvent e) {
-			// TODO Auto-generated method stub
-		}
+	public class MenuListener implements ListSelectionListener {
 
 		@Override
 		public void valueChanged(ListSelectionEvent e) {
-			if(!e.getValueIsAdjusting()) { 
-				int[] selectedRow = table.getSelectedRows();
-		        int[] selectedColumns = table.getSelectedColumns();
-		        //TODO : temp code just to make it work
-		        String s = (String) table.getValueAt(selectedRow[0], selectedColumns[0]);
-		        final List<String> list = new ArrayList<String>();
-		        list.add(s);
-				grapher.activeFunctions(list);
+			if(!e.getValueIsAdjusting()) {
+				//TODO ArrayOutOfBound si suppresion multiple comprenant dernier element
+				System.out.println("BB");
+				grapher.changeActiveFunctions(table.getSelectedRows());
 				grapher.repaint();
 			}
 		}

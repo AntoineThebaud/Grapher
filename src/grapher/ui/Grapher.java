@@ -8,6 +8,7 @@ import java.awt.BasicStroke;
 import javax.swing.JPanel;
 
 import java.awt.Point;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -66,6 +67,27 @@ public class Grapher extends JPanel {
 		functions.add(function);
 		functionsState.add(false);
 		repaint();
+	}
+	
+	public void remove(int[] indices) {
+		for(int i = 0; i < indices.length; ++i) {
+			System.out.println("remove "+ (indices[i] - i));
+			functions.remove(indices[i] - i);
+			functionsState.remove(indices[i] - i);
+			//" - i" car la table réduit de 1 à chaque suppression
+    	}
+		repaint();
+	}
+    
+	public void changeActiveFunctions(int[] selectedRows) {
+		//reset all to false
+		for(int i = 0; i < functions.size(); ++i) {
+    		functionsState.set(i, false);
+    	}
+		//set selected to true (functions will appear in bold)
+		for(int i = 0; i < selectedRows.length; ++i) {
+			functionsState.set(selectedRows[i], true);
+    	}
 	}
 		
 	public Dimension getPreferredSize() {
@@ -232,19 +254,6 @@ public class Grapher extends JPanel {
 		ymin = min(y0, y1); ymax = max(y0, y1);
 		repaint();	
 	}
-    
-    public void activeFunctions(List<String> listFunc) {
-    	for(int i = 0; i < functions.size(); ++i) {
-    		functionsState.set(i, false);
-    		for(int j = 0; j < listFunc.size(); ++j) {
-    			if(functions.get(i).toString().equals(listFunc.get(j))) {
-    				functionsState.set(i, true);
-    				break;
-    			}
-    		}
-    	}
-    }
-	
 	
 	//TODO : Refactor version Machine à états
 	public class GrapherListener implements MouseListener, MouseMotionListener, MouseWheelListener {
