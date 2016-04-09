@@ -71,7 +71,6 @@ public class Grapher extends JPanel {
 	
 	public void remove(int[] indices) {
 		for(int i = 0; i < indices.length; ++i) {
-			System.out.println("remove "+ (indices[i] - i));
 			functions.remove(indices[i] - i);
 			functionsState.remove(indices[i] - i);
 			//" - i" car la table réduit de 1 à chaque suppression

@@ -17,6 +17,7 @@ import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -29,11 +30,14 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 
 public class Menu extends JPanel implements ActionListener {
 	
@@ -51,16 +55,16 @@ public class Menu extends JPanel implements ActionListener {
 		//Composant 1 : Table
 		
 		String[] columnNames = {"Expression", "Color"};
-		
-		//Todo : boucle qui ajoute les fonctions avec couleur
-		
+
 		Object[][] data = {};
-		
 		DefaultTableModel model = new DefaultTableModel(data, columnNames);
 		table = new JTable(model);
 		for(String expression : expressions) {
-			model.addRow(new Object[]{expression, "RED"});
+			model.addRow(new Object[]{expression});
 		}
+		//ajout couleurs :
+		TableColumn colorColumn = table.getColumnModel().getColumn(1);
+		colorColumn.setCellEditor(new ColorEditor());
 		
 		//table = new JTable(data, columnNames);
 		table.setFillsViewportHeight(true);
@@ -69,7 +73,7 @@ public class Menu extends JPanel implements ActionListener {
 		table.setCellSelectionEnabled(true);
 	    ListSelectionModel cellSelectionModel = table.getSelectionModel();
 	    cellSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);//TODO : REPLACE BY MULTIPLE
-	    cellSelectionModel.addListSelectionListener(new MenuListener());
+	    cellSelectionModel.addListSelectionListener(new MyListSelectionListener());
 		
 		//Composant 2 : Boutons
 		
@@ -101,6 +105,7 @@ public class Menu extends JPanel implements ActionListener {
         switch (e.getActionCommand()) {
 	        case PLUS:
 	        	String newExp = JOptionPane.showInputDialog(this.getParent(),"Nouvelle expression");
+	        	if(newExp == null) break;//close or cancel button has been clicked
 	        	System.out.println(newExp);
 	        	try {
 	        		//update graph
@@ -117,30 +122,42 @@ public class Menu extends JPanel implements ActionListener {
 	        	//update graph
 	        	grapher.remove(selectedRows);
 	        	//update menu
+	        	table.clearSelection();
 	        	DefaultTableModel model = (DefaultTableModel) table.getModel();
 	        	for(int i = 0; i < selectedRows.length; ++i) {
 	        		model.removeRow(selectedRows[i] - i);
 	        		//" - i" car la table réduit de 1 à chaque suppression
-	        		System.out.println("AA");
 	        	}
-	        	table.clearSelection();
 	        	break;
 	        default:
 	        	assert(false);
         }
 	}
 	
-	public class MenuListener implements ListSelectionListener {
+	public class MyListSelectionListener implements ListSelectionListener {
 
 		@Override
 		public void valueChanged(ListSelectionEvent e) {
 			if(!e.getValueIsAdjusting()) {
-				//TODO ArrayOutOfBound si suppresion multiple comprenant dernier element
-				System.out.println("BB");
 				grapher.changeActiveFunctions(table.getSelectedRows());
 				grapher.repaint();
 			}
 		}
-		
 	}
+	
+//	public class MyCellEditorListener implements CellEditorListener {
+//
+//		@Override
+//		public void editingStopped(ChangeEvent e) {
+//			// TODO Auto-generated method stub
+//			System.out.println("editingStopped");
+//		}
+//
+//		@Override
+//		public void editingCanceled(ChangeEvent e) {
+//			// TODO Auto-generated method stub
+//			System.out.println("editingCanceled");
+//		}
+//		
+//	}
 }
