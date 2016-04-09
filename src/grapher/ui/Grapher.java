@@ -46,14 +46,17 @@ public class Grapher extends JPanel {
     Graphics2D g2;
 
 	protected Vector<Function> functions;
-	protected Vector<Boolean> functionsState;
+	protected Vector<Boolean> funcStates;
+	protected Vector<Color> funcColors;
 	
 	public Grapher() {		
 		xmin = -PI/2.; xmax = 3*PI/2;
 		ymin = -1.5;   ymax = 1.5;
 		
 		functions = new Vector<Function>();
-		functionsState = new Vector<Boolean>();
+		funcStates = new Vector<Boolean>();
+		funcColors = new Vector<Color>();
+		
         this.addMouseListener(new GrapherListener());
         this.addMouseMotionListener(new GrapherListener());
         this.addMouseWheelListener(new GrapherListener());
@@ -65,27 +68,53 @@ public class Grapher extends JPanel {
 	
 	public void add(Function function) {
 		functions.add(function);
-		functionsState.add(false);
+		funcStates.add(false);
+		funcColors.add(Color.BLACK);
 		repaint();
 	}
 	
 	public void remove(int[] indices) {
 		for(int i = 0; i < indices.length; ++i) {
 			functions.remove(indices[i] - i);
-			functionsState.remove(indices[i] - i);
+			funcStates.remove(indices[i] - i);
 			//" - i" car la table réduit de 1 à chaque suppression
     	}
+		repaint();
+	}
+	
+	public void edit(int index, int toEdit, Object newVal) {
+		
+		switch (toEdit) {
+			case 0 :
+				//edit formula
+				/*le code fourni ne permet pas d'éditer une fonction existante
+				 *solution : insérer une nouvelle fonction au meme index que 
+				 *l'ancienne puis supprimer cette dernière */
+				//ajout nouvelle
+				functions.add(index, FunctionFactory.createFunction((String) newVal));
+				funcColors.add(index, funcColors.get(index));
+				funcStates.add(index, funcStates.get(index));
+				//suppression ancienne
+				functions.remove(index+1);
+				funcColors.remove(index+1);
+				funcStates.remove(index+1);
+				break;
+			case 1 :
+				//edit color
+				funcColors.set(index, (Color) newVal);
+				break;
+		}
 		repaint();
 	}
     
 	public void changeActiveFunctions(int[] selectedRows) {
 		//reset all to false
 		for(int i = 0; i < functions.size(); ++i) {
-    		functionsState.set(i, false);
+    		funcStates.set(i, false);
     	}
 		//set selected to true (functions will appear in bold)
 		for(int i = 0; i < selectedRows.length; ++i) {
-			functionsState.set(selectedRows[i], true);
+			funcStates.set(selectedRows[i], true);
     	}
 	}
 		
@@ -135,24 +164,13 @@ public class Grapher extends JPanel {
 			xs[i] = x;
 			Xs[i] = X(x);
 		}
-		
-//		// OLD VERSION 
-//		for(Function f : functions) {
-//			// y values
-//			int Ys[] = new int[N];
-//			for(int i = 0; i < N; i++) {
-//				Ys[i] = Y(f.y(xs[i]));
-//			}
-//			g2.drawPolyline(Xs, Ys, N);
-//		}
-		
+
+		//draw functions
 		for(int i = 0; i < functions.size(); ++i) {
 			//set bold if function is "active"
-			if(functionsState.get(i).booleanValue() == true) {
-				g2.setStroke(new BasicStroke(2));
-			} else {
-				g2.setStroke(new BasicStroke(1));
-			}
+			g2.setStroke(funcStates.get(i).booleanValue() == true ? new BasicStroke(2) : new BasicStroke(1));
+			//set color
+			g2.setColor(funcColors.get(i));
 			// y values
 			int Ys[] = new int[N];
 			for(int j = 0; j < N; j++) {
@@ -161,7 +179,10 @@ public class Grapher extends JPanel {
 			g2.drawPolyline(Xs, Ys, N);
 		}
 		
+		//reset 
 		g2.setStroke(new BasicStroke(1));
+		g2.setColor(Color.BLACK);
+		
 		g2.setClip(null);
 
 		// axes

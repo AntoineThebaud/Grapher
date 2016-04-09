@@ -14,8 +14,11 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 
 public class Menu extends JPanel implements ActionListener {
 	
@@ -23,7 +26,6 @@ public class Menu extends JPanel implements ActionListener {
 	static final String MOINS = " -  ";
 
 	Grapher grapher;
-	//JList<String> list;
 	JTable table;
 	JToolBar toolbar;
 	
@@ -32,43 +34,47 @@ public class Menu extends JPanel implements ActionListener {
 		
 		//Composant 1 : Table
 		
+		// initialisation
 		String[] columnNames = {"Expression", "Color"};
-
 		Object[][] data = {};
 		DefaultTableModel model = new DefaultTableModel(data, columnNames);
 		table = new JTable(model);
 		for(String expression : expressions) {
-			model.addRow(new Object[]{expression, new Color(1)});
+			model.addRow(new Object[]{expression, Color.BLACK});
 		}
-		
-		//ajout couleurs :
+		// rendu couleur pour la colonne Color
 		TableColumn colorColumn = table.getColumnModel().getColumn(1);
 		colorColumn.setCellEditor(new ColorEditor());
 		colorColumn.setCellRenderer(new ColorRenderer(true));
 		
-		//table = new JTable(data, columnNames);
+		// affichage
 		table.setFillsViewportHeight(true);
 		table.getColumnModel().getColumn(0).setPreferredWidth(120);
 		table.getColumnModel().getColumn(1).setPreferredWidth(50);
-
+		
+		// listener : selection
 	    ListSelectionModel cellSelectionModel = table.getSelectionModel();
 	    cellSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);//TODO : REPLACE BY MULTIPLE
 	    cellSelectionModel.addListSelectionListener(new MyListSelectionListener());
+	    
+	    // listener : edition
+	    table.getModel().addTableModelListener(new MyCellEditionListener());
 		
+	    	    
 		//Composant 2 : Boutons
 		
 		this.toolbar = new JToolBar();
-
+		// bouton Ajout
 	    JButton buttonPlus = new JButton(PLUS);
 	    buttonPlus.setHorizontalAlignment(SwingConstants.CENTER);
 	    buttonPlus.addActionListener(this);
-	    
+	    this.toolbar.add(buttonPlus);
+	    // bouton Suppression
 	    JButton buttonMin = new JButton(MOINS);
 	    buttonMin.setHorizontalAlignment(SwingConstants.CENTER);
 	    buttonMin.addActionListener(this);
-	    
-	    this.toolbar.add(buttonPlus);
 	    this.toolbar.add(buttonMin);
+	    
 	    
 	    //Composant final : 1 + 2
 	       
@@ -80,19 +86,17 @@ public class Menu extends JPanel implements ActionListener {
 
 	@Override //Button event
 	public void actionPerformed(ActionEvent e) {
-        String cmd = e.getActionCommand();
-        
+
         switch (e.getActionCommand()) {
 	        case PLUS:
 	        	String newExp = JOptionPane.showInputDialog(this.getParent(),"Nouvelle expression");
 	        	if(newExp == null) break;//close or cancel button has been clicked
-	        	System.out.println(newExp);
 	        	try {
 	        		//update graph
 		        	grapher.add(newExp);
 		        	//update menu
 		        	DefaultTableModel model = (DefaultTableModel) table.getModel();
-		        	model.addRow(new Object[]{newExp, "GREEN"});
+		        	model.addRow(new Object[]{newExp, Color.BLACK});
 	        	} catch (Exception ex) {
 	        		JOptionPane.showMessageDialog(this.getParent(),"Expression invalide", "Erreur", 0);
 	        	}
@@ -122,6 +126,29 @@ public class Menu extends JPanel implements ActionListener {
 				grapher.changeActiveFunctions(table.getSelectedRows());
 				grapher.repaint();
 			}
+		}
+	}
+	
+	public class MyCellEditionListener implements TableModelListener  {
+
+		@Override
+		public void tableChanged(TableModelEvent e) {
+			
+			//cancel event if triggered by adding/removing a row
+			if(e.getType() != TableModelEvent.UPDATE) return;
+			
+			int row = e.getFirstRow();
+	        int col = e.getColumn();
+	        TableModel model = (TableModel)e.getSource();
+	        
+	        String columnName = model.getColumnName(col);
+	        Object data = model.getValueAt(row, col);
+	        
+	        try {
+	        	grapher.edit(row, col, data);
+        	} catch (Exception ex) {
+        		JOptionPane.showMessageDialog(new JPanel(),"Expression invalide", "Erreur", 0);
+        	}
 		}
 	}
 }
