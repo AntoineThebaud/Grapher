@@ -30,8 +30,14 @@ public class Grapher extends JPanel {
 	static final BasicStroke dash = new BasicStroke(1, BasicStroke.CAP_ROUND,
 	                                                   BasicStroke.JOIN_ROUND,
 	                                                   1.f,
-	                                                   new float[] { 4.f, 4.f },
+	                                                   new float[] { 3.f, 3.f },
 	                                                   0.f);
+	
+	static final BasicStroke boldDash = new BasicStroke(1, BasicStroke.CAP_ROUND,
+											            BasicStroke.JOIN_ROUND,
+											            1.f,
+											            new float[] { 6.f, 6.f },
+											            0.f);
 	                                                   
 	protected int W = 400;
 	protected int H = 300;
@@ -40,11 +46,12 @@ public class Grapher extends JPanel {
 	protected double ymin, ymax;
         
     protected Point pts;
-    Graphics2D g2;
 
 	protected Vector<Function> functions;
 	protected Vector<Boolean> funcStates;
 	protected Vector<Color> funcColors;
+	
+    protected Rectangle selectionRec;
 	
 	public Grapher() {		
 		xmin = -PI/2.; xmax = 3*PI/2;
@@ -126,7 +133,7 @@ public class Grapher extends JPanel {
 		W = getWidth();
 		H = getHeight();
 
-		g2 = (Graphics2D)g;
+		Graphics2D g2 = (Graphics2D)g;
 
 		// background
 		g2.setColor(Color.WHITE);
@@ -189,12 +196,20 @@ public class Grapher extends JPanel {
 		
 		double xstep = unit((xmax-xmin)/10);
 		double ystep = unit((ymax-ymin)/10);
-
+		
 		g2.setStroke(dash);
+		g2.setColor(Color.GRAY);
 		for(double x = xstep; x < xmax; x += xstep)  { drawXTick(g2, x); }
 		for(double x = -xstep; x > xmin; x -= xstep) { drawXTick(g2, x); }
 		for(double y = ystep; y < ymax; y += ystep)  { drawYTick(g2, y); }
 		for(double y = -ystep; y > ymin; y -= ystep) { drawYTick(g2, y); }
+		
+		//selection Rec
+		if(selectionRec!=null) {
+			g2.setColor(Color.BLACK);
+			g2.setStroke(boldDash);
+			g2.draw(selectionRec);
+		}
 	}
 	
 	protected double dx(int dX) { 
@@ -301,9 +316,8 @@ public class Grapher extends JPanel {
 	    	//bouton droit : zoom sur zone sélectionnée
 	        if (SwingUtilities.isRightMouseButton(e)) {
 	        	System.out.println("DRAG RIGHT");
-				Rectangle r = new Rectangle(pts);
-				r.add(e.getPoint());
-				g2.draw(r);
+	        	selectionRec.setSize(e.getX()-(int) pts.getX(), e.getY()-(int)pts.getY());
+	        	repaint();
 	        }
 		}
 
@@ -328,16 +342,17 @@ public class Grapher extends JPanel {
 		@Override
 		public void mousePressed(MouseEvent e) {
 			pts = e.getPoint();
+			selectionRec = new Rectangle(pts);
 		}
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
-			// TODO Auto-generated method stub
 	    	System.out.println("RELEASED");
 	        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	        if (e.getButton() == 3) {
 	            zoom(pts, e.getPoint());
 	        }
+	        selectionRec = null;
 		}
 
 		@Override
