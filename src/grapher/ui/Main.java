@@ -29,43 +29,41 @@ public class Main extends JFrame implements ActionListener {
 		super(title);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
-		//Graph (right part)
+		//Graph (right)
 		grapher = new Grapher();		
 		for(String expression : expressions) {
 			grapher.add(expression);
 		}
 		
-		//Menu (left part)
+		//Menu (left)
 		leftMenu = new Menu(expressions, grapher);
 		
-		//SplitPane (right/left separation)
+		//SplitPane (left/right separation)
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,leftMenu,grapher);
 		splitPane.setOneTouchExpandable(true);
 		splitPane.setDividerLocation(120);
 		this.add(splitPane);
 		
-	    //Menu bar
+	    //Menu bar (top)
 	    menuBar = new JMenuBar();
 	    JMenu menu = new JMenu("Expression");
 	    menu.setMnemonic('t');
 	    menuBar.add(menu);
-	    
-	    //Submenus
-	    
-	    //add
+	    //submenu : add
 	    JMenuItem itemAdd = new JMenuItem("Add");
 	    itemAdd.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK));
 	    itemAdd.addActionListener(this);
 	    menu.add(itemAdd);
-	    //remove
+	    //submenu : remove
 	    JMenuItem itemRemove = new JMenuItem("Remove");
 	    itemRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK));
 	    itemRemove.addActionListener(this);
 	    menu.add(itemRemove);
 	    this.setJMenuBar(menuBar);
 	    
+	    //Display
 		this.pack();
-		this.setLocationRelativeTo(null);//center the frame
+		this.setLocationRelativeTo(null);//(center the frame)
 		this.setVisible(true);
 	}
 

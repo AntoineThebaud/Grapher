@@ -5,6 +5,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Color;
 import java.awt.BasicStroke;
+
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import java.awt.Point;
@@ -45,7 +47,7 @@ public class Grapher extends JPanel {
 	protected double xmin, xmax;
 	protected double ymin, ymax;
         
-    protected Point pts;
+    protected Point pt;
 
 	protected Vector<Function> functions;
 	protected Vector<Boolean> funcStates;
@@ -61,9 +63,10 @@ public class Grapher extends JPanel {
 		funcStates = new Vector<Boolean>();
 		funcColors = new Vector<Color>();
 		
-        this.addMouseListener(new GrapherListener());
-        this.addMouseMotionListener(new GrapherListener());
-        this.addMouseWheelListener(new GrapherListener());
+		GrapherListener grapherListener = new GrapherListener();
+        this.addMouseListener(grapherListener);
+        this.addMouseMotionListener(grapherListener);
+        this.addMouseWheelListener(grapherListener);
 	}
 	
 	public void add(String expression) {
@@ -82,7 +85,7 @@ public class Grapher extends JPanel {
 			functions.remove(indices[i] - i);
 			funcStates.remove(indices[i] - i);
 			funcColors.remove(indices[i] - i);
-			//" - i" because the vectors gets smaller with every iteration
+			//" - i" because the vectors get smaller with every iteration
     	}
 		repaint();
 	}
@@ -170,7 +173,7 @@ public class Grapher extends JPanel {
 			Xs[i] = X(x);
 		}
 
-		//draw functions
+		// draw functions
 		for(int i = 0; i < functions.size(); ++i) {
 			//set bold if function is "active"
 			g2.setStroke(funcStates.get(i).booleanValue() == true ? new BasicStroke(2) : new BasicStroke(1));
@@ -184,7 +187,7 @@ public class Grapher extends JPanel {
 			g2.drawPolyline(Xs, Ys, N);
 		}
 		
-		//reset 
+		// reset 
 		g2.setStroke(new BasicStroke(1));
 		g2.setColor(Color.BLACK);
 		
@@ -204,8 +207,8 @@ public class Grapher extends JPanel {
 		for(double y = ystep; y < ymax; y += ystep)  { drawYTick(g2, y); }
 		for(double y = -ystep; y > ymin; y -= ystep) { drawYTick(g2, y); }
 		
-		//selection Rec
-		if(selectionRec!=null) {
+		// selectionRec
+		if(selectionRec != null) {
 			g2.setColor(Color.BLACK);
 			g2.setStroke(boldDash);
 			g2.draw(selectionRec);
@@ -288,83 +291,116 @@ public class Grapher extends JPanel {
 		repaint();	
 	}
 	
-	//TODO : Refactor version Machine à états
+	public enum State { UP, CLIC_OR_DRAG, DRAG }
+	
+	//GrapherListener (State machine using enum State)
 	public class GrapherListener implements MouseListener, MouseMotionListener, MouseWheelListener {
-
+		
+		State state = State.UP;
+		static final int D_DRAG = 15;
+		
+		@Override
+		public void mousePressed(MouseEvent e) {
+			switch(state) {
+				case UP:
+					pt = e.getPoint();
+					state = State.CLIC_OR_DRAG;
+					selectionRec = new Rectangle(pt);
+		            break;
+		        default: 
+		            throw new RuntimeException();
+			}
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			switch(state) {
+				case CLIC_OR_DRAG:
+					if (SwingUtilities.isLeftMouseButton(e)){
+						// Zoom in (+5%)
+			            zoom(e.getPoint(), 5);
+			        }
+			        if (SwingUtilities.isRightMouseButton(e)) {
+			        	// Zoom out (-5%)
+			            zoom(e.getPoint(), -5);
+			        }
+					state = State.UP;
+		            break;
+				case DRAG:
+					setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			        if (SwingUtilities.isRightMouseButton(e)) {
+			            zoom(pt, e.getPoint());
+			        }
+					state = State.UP;
+					selectionRec = null;
+					break;
+		        default: 
+		            throw new RuntimeException();
+			}
+		}
+		
+		@Override
+		public void mouseDragged(MouseEvent e) {
+			switch(state) {
+				case CLIC_OR_DRAG:
+					//left button : switch automatically to state DRAG
+					//right button : don't switch if selection is too tiny					
+			        if (SwingUtilities.isLeftMouseButton(e) ||
+			        	(SwingUtilities.isRightMouseButton(e) && pt.distance(e.getPoint()) > D_DRAG)){
+			        	state = State.DRAG;
+			        }
+					break;
+				case DRAG:
+					//left button : move axes
+			        if (SwingUtilities.isLeftMouseButton(e)){
+			            setCursor(new Cursor(Cursor.HAND_CURSOR));
+			            translate(e.getX() - (int)pt.getX(), e.getY() - (int)pt.getY());
+			            pt = e.getPoint();
+			        }
+			    	//right button : adjust size of selectionRec
+			        if (SwingUtilities.isRightMouseButton(e)) {
+			        	selectionRec.setSize(e.getX()-(int) pt.getX(), e.getY()-(int)pt.getY());
+			        	repaint();
+			        }
+					break;
+				case UP :
+					System.out.println("AAJHIAJKDJZAHBDZKDELJKHBZ");
+					break;
+				default:					
+					throw new RuntimeException();
+			}
+		}
+		
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
 	        if (e.getPreciseWheelRotation() < 0) {
-	            //Zoom
+	            //Zoom in (+5%)
 	            zoom(e.getPoint(), 5);
 	        }
 	        else if (e.getPreciseWheelRotation() > 0) {
-	            //Dézoom
+	            //Zoom out (-5%)
 	            zoom(e.getPoint(), -5);
 	        }
 		}
-
+		
 		@Override
-		public void mouseDragged(MouseEvent e) {
-			//bouton gauche : déplace le repère
-	        if (SwingUtilities.isLeftMouseButton(e)){
-	        	System.out.println("DRAG LEFT");
-	            setCursor(new Cursor(Cursor.HAND_CURSOR));
-	            //translate(e.getX(),e.getY());
-	            translate(e.getX() - (int)pts.getX(), e.getY() - (int)pts.getY());
-	            pts = e.getPoint();
-	        }
-	    	//bouton droit : zoom sur zone sélectionnée
-	        if (SwingUtilities.isRightMouseButton(e)) {
-	        	System.out.println("DRAG RIGHT");
-	        	selectionRec.setSize(e.getX()-(int) pts.getX(), e.getY()-(int)pts.getY());
-	        	repaint();
-	        }
+		public void mouseClicked(MouseEvent e) {
+			// TODO Auto-generated method stub
 		}
 
 		@Override
 		public void mouseMoved(MouseEvent e) {
 			// TODO Auto-generated method stub
-			
 		}
-
-		@Override
-		public void mouseClicked(MouseEvent e) {
-	        if (e.getButton() == 1){
-	            // Zoom de 5% centré sur le curseur
-	            zoom(e.getPoint(), 5);
-	        }
-	        if (e.getButton() == 3){
-	            // Dézoom de 5% centré sur le curseur.
-	            zoom(e.getPoint(), -5);
-	        }
-		}
-
-		@Override
-		public void mousePressed(MouseEvent e) {
-			pts = e.getPoint();
-			selectionRec = new Rectangle(pts);
-		}
-
-		@Override
-		public void mouseReleased(MouseEvent e) {
-	    	System.out.println("RELEASED");
-	        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	        if (e.getButton() == 3) {
-	            zoom(pts, e.getPoint());
-	        }
-	        selectionRec = null;
-		}
-
+		
 		@Override
 		public void mouseEntered(MouseEvent e) {
 			// TODO Auto-generated method stub
-			
 		}
 
 		@Override
 		public void mouseExited(MouseEvent e) {
 			// TODO Auto-generated method stub
-			
 		}
 		
 	}
