@@ -8,15 +8,12 @@ import java.awt.BasicStroke;
 import javax.swing.JPanel;
 
 import java.awt.Point;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Vector;
 
 import static java.lang.Math.*;
 
 import grapher.fc.*;
 import java.awt.Cursor;
-import static java.awt.Cursor.HAND_CURSOR;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -77,7 +74,8 @@ public class Grapher extends JPanel {
 		for(int i = 0; i < indices.length; ++i) {
 			functions.remove(indices[i] - i);
 			funcStates.remove(indices[i] - i);
-			//" - i" car la table réduit de 1 à chaque suppression
+			funcColors.remove(indices[i] - i);
+			//" - i" because the vectors gets smaller with every iteration
     	}
 		repaint();
 	}
@@ -87,14 +85,14 @@ public class Grapher extends JPanel {
 		switch (toEdit) {
 			case 0 :
 				//edit formula
-				/*le code fourni ne permet pas d'éditer une fonction existante
-				 *solution : insérer une nouvelle fonction au meme index que 
-				 *l'ancienne puis supprimer cette dernière */
-				//ajout nouvelle
+				/*the provided code doesn't allow to edit an existing function
+				 * solution : insert a new one (at the same index), then
+				 * delete the old one */
+				//add new version
 				functions.add(index, FunctionFactory.createFunction((String) newVal));
 				funcColors.add(index, funcColors.get(index));
 				funcStates.add(index, funcStates.get(index));
-				//suppression ancienne
+				//delete old version
 				functions.remove(index+1);
 				funcColors.remove(index+1);
 				funcStates.remove(index+1);
