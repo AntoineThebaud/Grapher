@@ -381,7 +381,7 @@ public class Grapher extends JPanel {
 			            selectionRec.y = minY;
 			            selectionRec.width = maxX - minX;
 			            selectionRec.height = maxY - minY;
-			            
+			            //cancel selection if the rectangle is too tiny
 			        	if (pt.distance(e.getPoint()) < D_DRAG){
 			        		selectionRec = null;
 			        		state = State.CLIC_OR_DRAG;
