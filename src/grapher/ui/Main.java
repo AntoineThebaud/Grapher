@@ -51,12 +51,10 @@ public class Main extends JFrame implements ActionListener {
 	    menuBar.add(menu);
 	    //submenu : add
 	    JMenuItem itemAdd = new JMenuItem("Add");
-	    itemAdd.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK));
 	    itemAdd.addActionListener(this);
 	    menu.add(itemAdd);
 	    //submenu : remove
 	    JMenuItem itemRemove = new JMenuItem("Remove");
-	    itemRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK));
 	    itemRemove.addActionListener(this);
 	    menu.add(itemRemove);
 	    this.setJMenuBar(menuBar);

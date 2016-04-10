@@ -39,15 +39,13 @@ public class Grapher extends JPanel {
 											            BasicStroke.JOIN_ROUND,
 											            1.f,
 											            new float[] { 6.f, 6.f },
-											            0.f);
-	                                                   
+											            0.f);                                       
+	
 	protected int W = 400;
 	protected int H = 300;
 	
 	protected double xmin, xmax;
 	protected double ymin, ymax;
-        
-    protected Point pt;
 
 	protected Vector<Function> functions;
 	protected Vector<Boolean> funcStates;
@@ -207,7 +205,7 @@ public class Grapher extends JPanel {
 		for(double y = ystep; y < ymax; y += ystep)  { drawYTick(g2, y); }
 		for(double y = -ystep; y > ymin; y -= ystep) { drawYTick(g2, y); }
 		
-		// selectionRec
+		// selectionRec	
 		if(selectionRec != null) {
 			g2.setColor(Color.BLACK);
 			g2.setStroke(boldDash);
@@ -296,8 +294,10 @@ public class Grapher extends JPanel {
 	//GrapherListener (State machine using enum State)
 	public class GrapherListener implements MouseListener, MouseMotionListener, MouseWheelListener {
 		
+		static final int D_DRAG = 50;
+		
+		protected Point pt;
 		State state = State.UP;
-		static final int D_DRAG = 15;
 		
 		@Override
 		public void mousePressed(MouseEvent e) {
@@ -343,11 +343,24 @@ public class Grapher extends JPanel {
 		public void mouseDragged(MouseEvent e) {
 			switch(state) {
 				case CLIC_OR_DRAG:
-					//left button : switch automatically to state DRAG
-					//right button : don't switch if selection is too tiny					
-			        if (SwingUtilities.isLeftMouseButton(e) ||
-			        	(SwingUtilities.isRightMouseButton(e) && pt.distance(e.getPoint()) > D_DRAG)){
+					//left button : switch automatically to state DRAG			
+			        if (SwingUtilities.isLeftMouseButton(e)) {
 			        	state = State.DRAG;
+			        }			        
+			        //right button : don't switch if selection is too tiny	
+			        if (SwingUtilities.isRightMouseButton(e) && pt.distance(e.getPoint()) > D_DRAG){
+			        	selectionRec = new Rectangle(pt);
+			        	int minX = Math.min(e.getX(), pt.x);
+			            int minY = Math.min(e.getY(), pt.y);
+			            int maxX = Math.max(e.getX(), pt.x);
+			            int maxY = Math.max(e.getY(), pt.y);
+			            selectionRec.x = minX;
+			            selectionRec.y = minY;
+			            selectionRec.width = maxX - minX;
+			            selectionRec.height = maxY - minY;
+			            
+			            state = State.DRAG;
+			        	repaint();
 			        }
 					break;
 				case DRAG:
@@ -359,12 +372,22 @@ public class Grapher extends JPanel {
 			        }
 			    	//right button : adjust size of selectionRec
 			        if (SwingUtilities.isRightMouseButton(e)) {
-			        	selectionRec.setSize(e.getX()-(int) pt.getX(), e.getY()-(int)pt.getY());
+			        	selectionRec = new Rectangle(pt);
+			        	int minX = Math.min(e.getX(), pt.x);
+			            int minY = Math.min(e.getY(), pt.y);
+			            int maxX = Math.max(e.getX(), pt.x);
+			            int maxY = Math.max(e.getY(), pt.y);
+			            selectionRec.x = minX;
+			            selectionRec.y = minY;
+			            selectionRec.width = maxX - minX;
+			            selectionRec.height = maxY - minY;
+			            
+			        	if (pt.distance(e.getPoint()) < D_DRAG){
+			        		selectionRec = null;
+			        		state = State.CLIC_OR_DRAG;
+					    }
 			        	repaint();
 			        }
-					break;
-				case UP :
-					System.out.println("AAJHIAJKDJZAHBDZKDELJKHBZ");
 					break;
 				default:					
 					throw new RuntimeException();
